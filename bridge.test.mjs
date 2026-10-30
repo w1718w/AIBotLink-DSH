@@ -185,6 +185,29 @@ test('Companion prompt ownership filters Desktop turns and emits only the canoni
   } finally { await f.close(); }
 });
 
+test('Companion attributes the prompt when DSH admits through inbox splice and turn/start before user/message', async () => {
+  const f = await fixture();
+  try {
+    const client = await f.connect();
+    const final = event(client, 'notification', e => e.params.update?.sessionUpdate === 'agent_message_final');
+    const { input, completion } = await startPrompt(f, client);
+    // Shape captured from a real DSH Host: the durable inbox claim and turn/start
+    // precede the user/message record, which carries no turn field of its own.
+    f.emit('agent/inbox/spliced', { target: 'next-turn', start: 0, inserted: [{ source: { kind: 'user', rpcId: input.requestId } }] });
+    f.emit('turn/start', { turn: 7 });
+    f.emit('agent/inbox/spliced', { target: 'next-turn', start: 0, inserted: [], removedCount: 1 });
+    f.emit('step/start', { turn: 7, step: 1 });
+    f.emit('user/message', { source: { kind: 'user', rpcId: input.requestId } });
+    f.emit('assistant/message', { turn: 7, step: 1, message: { content: [{ type: 'text', text: 'qqok' }] } });
+    f.emit('step/end', { turn: 7, step: 1 });
+    f.emit('turn/end', { turn: 7, reason: { kind: 'completed' } });
+    const result = await completion;
+    assert.equal(result.stopReason, 'end_turn');
+    assert.equal(result.text, 'qqok');
+    assert.equal((await final).params.update.text, 'qqok');
+  } finally { await f.close(); }
+});
+
 test('Companion attributes pre-message failures through exact durable inbox claims', async () => {
   const f = await fixture(); f.gates.globalEvents = false;
   try {

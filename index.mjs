@@ -117,7 +117,20 @@ export async function startBridge(ctx, config = {}) {
       if (!Number.isSafeInteger(event.seq) || event.seq <= run.lastSeq) return;
       run.lastSeq = event.seq;
       const d = event.data ?? {}; const failedTurn = run.failure.consume(event);
-      if (event.type === 'user/message' && run.requestIds.has(d.source?.rpcId)) run.turn = d.turn;
+      // DSH admits a prompt through the durable inbox and starts the turn before
+      // the user/message record is appended; that record does not carry `turn`.
+      // Claim only this request's exact rpcId, never a guessed turn.
+      const claimed = (event.type === 'user/message' && run.requestIds.has(d.source?.rpcId))
+        || (event.type === 'agent/inbox/spliced' && (d.inserted ?? []).some(message => run.requestIds.has(message?.source?.rpcId)));
+      if (claimed) {
+        run.admitted = true;
+        if (Number.isSafeInteger(d.turn)) run.turn = d.turn;
+        else if (run.turn === undefined && Number.isSafeInteger(run.recentTurn) && run.recentTurnTime >= run.createdAt) run.turn = run.recentTurn;
+      }
+      if (event.type === 'turn/start' && Number.isSafeInteger(d.turn)) {
+        run.recentTurn = d.turn; run.recentTurnTime = Number.isSafeInteger(event.time) ? event.time : Date.now();
+        if (run.admitted && run.turn === undefined) run.turn = d.turn;
+      }
       if (event.type === 'turn/end' && failedTurn !== null && d.turn === failedTurn) { finish(id, fail('failed')); return; }
       if (run.turn === undefined || d.turn !== run.turn) return;
       if (event.type === 'assistant/chunk' && d.chunk?.type === 'text-delta') {
@@ -248,6 +261,7 @@ export async function startBridge(ctx, config = {}) {
         const before = first.value;
         const completed = new Promise((resolve, reject) => {
           runs.set(id, { resolve, reject, requestIds: new Set([requestId]), delta: '', final: '', lastSeq: before.cursor,
+            admitted: false, createdAt: Date.now(), recentTurn: undefined, recentTurnTime: 0,
             failure: new PromptFailureTracker(requestId, before.cursor),
             closeWatch: () => { controller.abort(); void Promise.resolve(iterator.return?.()).catch(() => {}); },
           });
