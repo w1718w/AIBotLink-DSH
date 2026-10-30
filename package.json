@@ -1,0 +1,12 @@
+{
+  "name": "aibotlink-dsh-companion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.mjs",
+  "description": "AIBotLink loopback bridge for the native DSH Host",
+  "scripts": { "test": "node --test bridge.test.mjs", "check": "node --check index.mjs && npm test" },
+  "files": ["index.mjs", "prompt-failure-tracker.mjs", "locales", "cordis.patch.yml", "LICENSE.dsh-im"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
+  "engines": { "node": ">=22.19" }
+}

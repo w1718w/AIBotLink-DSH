@@ -1,0 +1,18 @@
+{
+  "unavailable": "DSH 原生服务尚未就绪，请打开 DSH 并启用 AIBotLink 桥接插件。",
+  "busy": "DSH 此会话正在执行任务，请结束当前任务或新建会话。",
+  "missing": "DSH 原生会话不存在。",
+  "unsupported": "当前 DSH 未提供此原生操作。",
+  "invalid": "桥接请求格式无效。",
+  "invalidDataHome": "桥接连接配置和密钥必须保存在 Git 仓库之外。",
+  "disconnected": "网关连接已断开，任务结果需核验；未自动重放。",
+  "failed": "DSH 原生任务失败。",
+  "interactionExpired": "此原生交互已结束或不属于当前网关连接。",
+  "modelMissing": "模型或推理档位不在 DSH 原生目录中。",
+  "model": "模型",
+  "reasoning": "推理档位",
+  "permission": "权限模式",
+  "allow": "允许一次",
+  "decline": "拒绝",
+  "ready": "AIBotLink DSH 桥接已就绪（仅本机）。"
+}
