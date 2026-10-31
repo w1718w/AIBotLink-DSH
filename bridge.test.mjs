@@ -156,7 +156,7 @@ test('Companion reuses existing sessions, exposes native defaults and forwards f
     assert.equal(f.calls.filter(c => c.method === 'selectModel').length, 1);
     const fork = await client.call('session/fork', { sessionId: 'existing' }); assert.match(fork.sessionId, /^branch-/);
     assert.deepEqual(f.calls.find(c => c.method === 'fork').args, { request: { sessionId: 'existing' } });
-    assert.equal((await client.call('session/history', { sessionId: 'existing' })).text, 'stored user\n\nstored assistant');
+    assert.equal((await client.call('session/history', { sessionId: 'existing' })).text, '用户：\nstored user\n\nAI：\nstored assistant');
     const changed = await client.call('session/set_permission', { sessionId: 'existing', mode: 'workspace-write' });
     assert.equal(changed.currentValue, 'workspace-write');
     await client.call('session/compact', { sessionId: 'existing' });

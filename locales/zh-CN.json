@@ -9,6 +9,8 @@
   "failed": "DSH 原生任务失败。",
   "interactionExpired": "此原生交互已结束或不属于当前网关连接。",
   "modelMissing": "模型或推理档位不在 DSH 原生目录中。",
+  "historyUser": "用户",
+  "historyAssistant": "AI",
   "model": "模型",
   "reasoning": "推理档位",
   "permission": "权限模式",

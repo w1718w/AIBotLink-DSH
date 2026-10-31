@@ -225,7 +225,10 @@ export async function startBridge(ctx, config = {}) {
           .map(r => {
             const data = r.event.data ?? {};
             if (r.event.type === 'user/message' && data.source?.kind && data.source.kind !== 'user') return '';
-            return textOf(data.content ?? data.message?.content);
+            const content = textOf(data.content ?? data.message?.content);
+            if (!content) return '';
+            const role = r.event.type === 'user/message' ? copy.historyUser : copy.historyAssistant;
+            return `${role}：\n${content}`;
           })
           .filter(Boolean).join('\n\n');
         return { text };
