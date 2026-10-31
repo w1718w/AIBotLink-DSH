@@ -72,6 +72,8 @@ async function fixture() {
           // the consumer's next read remains queued, matching native follow.
           yield { type: 'snapshot', header: { id, origin: 'root' }, cursor: cursors.get(id) ?? 0, records: [
             { type: 'event', event: { type: 'user/message', data: { content: [{ type: 'text', text: 'stored user' }] } } },
+            // Injected runtime context is recorded as a user message but is not chat history.
+            { type: 'event', event: { type: 'user/message', data: { content: [{ type: 'text', text: '<system-reminder>injected</system-reminder>' }], source: { kind: 'runtime-context' } } } },
             { type: 'event', event: { type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'stored assistant' }] } } } },
           ] };
           while (!signal.aborted) {

@@ -218,7 +218,17 @@ export async function startBridge(ctx, config = {}) {
       }
       case 'session/history': {
         const frame = await snapshot(id);
-        return { text: frame.records.filter(r => r.type === 'event' && ['user/message', 'assistant/message'].includes(r.event?.type)).map(r => textOf(r.event.data.content ?? r.event.data.message?.content)).filter(Boolean).join('\n\n') };
+        // DSH records injected instructions and runtime context as user/message
+        // events. /history shows only real user input and assistant replies.
+        const text = frame.records
+          .filter(r => r.type === 'event' && ['user/message', 'assistant/message'].includes(r.event?.type))
+          .map(r => {
+            const data = r.event.data ?? {};
+            if (r.event.type === 'user/message' && data.source?.kind && data.source.kind !== 'user') return '';
+            return textOf(data.content ?? data.message?.content);
+          })
+          .filter(Boolean).join('\n\n');
+        return { text };
       }
       case 'session/set_config_option': {
         await idle(id); const options = await sessionOptions(id);
