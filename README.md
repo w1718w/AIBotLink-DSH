@@ -8,19 +8,30 @@
 
 需要 Node.js >=22.19，以及提供 `typertGateway`、`connection`、`sessionController` 的 DSH Host。插件按 DSH Host 0.2.1-rc.2 的原生契约实现；其他版本需核验原生契约。
 
-使用 DSH 原生插件 CLI 直接从 GitHub 安装，无需 clone 仓库（需能访问 GitHub）：
+安装前备份目标 Profile。使用 DSH 原生插件 CLI 直接从 GitHub 安装，无需 clone 仓库（需能访问 GitHub）：
 
 ```powershell
 dsh plugin --profile desktop add "github:w1718w/AIBotLink-DSH#main"
 ```
 
-安装前保留 Profile 备份。安装后确认目标 Profile 的 `dsh.profile.bundles` 数组包含 `aibotlink-dsh-companion`；若没有则追加，保留其他 bundle，再重启该 Host。原生 CLI 安装不会替你配置网关；网关的 `agents.<id>.dshBridge` 需指向下述连接记录。注册成功不等于插件已加载，网关完成握手后再确认能力。本地路径、连接记录和凭据必须在源仓库外。
+安装后由使用者完成以下配置；原生 CLI 不会替你配置网关，插件也不假设网关的安装位置：
 
-已有网关配置且使用 Windows 标准 DSH 安装位置时，也可在网关目录运行 `npm run install:dsh`；该脚本默认从同一 GitHub 来源安装，并备份 Profile 清单与网关配置、启用 bundle、更新 `dshBridge`。目标默认是已有的 `desktop` Profile；脚本不重启 Host。
+1. 检查 DSH 的 `%USERPROFILE%\.dsh\profiles\desktop\package.json`（自定义 `DSH_HOME` 时使用对应目录），确认 `dsh.profile.bundles` 数组包含 `aibotlink-dsh-companion`；若没有，将它追加到数组，保留其他 bundle。
+2. 编辑仓库外已有的网关 `config.json`，将 `agents.dsh` 改为 Host 桥接配置，保留原有工作目录 `cwd`，移除原 ACP 的 `command` / `args`。下面仅示意 `agents.dsh` 对象，不要覆盖整份配置；保留 QQ 配置及其他 Agent，并替换用户名和项目路径：
 
-开发者仍可在本仓库目录运行 `dsh plugin --profile desktop add --save-exact .` 安装本地版本；使用网关安装脚本时，以环境变量 `AILINKBRIDGE_COMPANION` 指定本地插件目录。
+```json
+{
+  "type": "dsh",
+  "cwd": "C:\\path\\to\\your-project",
+  "dshBridge": "C:\\Users\\<用户名>\\AppData\\Local\\AIBotLink\\dsh-bridge.json"
+}
+```
 
-插件仅监听 `127.0.0.1` 动态端口，默认将连接地址与随机 Token 写入 `%LOCALAPPDATA%\AIBotLink\dsh-bridge.json`。可通过 Host 插件配置的 `dataHome` 或进程 `BOTLINK_HOME` 指定其他仓库外目录，该目录不能位于 Git 仓库内；网关的 `dshBridge` 应指向同一记录。不要提交、共享或在问题报告中粘贴该文件。
+3. 停止已有网关，重启对应 DSH Host，让插件生成连接记录。在你实际的网关目录执行 `npm start -- doctor` 检查握手，再重新启动网关加载更新后的配置。桥接只允许一个客户端，doctor 检查时不要同时运行网关。安装成功不等于插件已加载，握手通过后再验证实际任务。
+
+插件仅监听 `127.0.0.1` 动态端口，默认将连接地址与随机 Token 写入 `%LOCALAPPDATA%\AIBotLink\dsh-bridge.json`。网关的 `dshBridge` 必须填写展开后的仓库外绝对路径，JSON 中的反斜杠需写成 `\\`。自定义数据目录时，通过 Host 插件配置的 `dataHome` 或 Host 进程的 `BOTLINK_HOME` 指定其他仓库外目录，并让网关的 `dshBridge` 指向同一记录。不要提交、共享或在问题报告中粘贴连接记录。
+
+开发者仍可在本仓库目录运行 `dsh plugin --profile desktop add --save-exact .` 安装本地版本；完成后同样按上述步骤启用 bundle 并连接网关。
 
 ## 实现范围
 
